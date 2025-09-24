@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Headline Classifier</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            margin: 15px 0;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        input[type="text"]:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: none;
+        }
+        .result.show {
+            display: block;
+        }
+        .category {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            margin: 10px 0;
+        }
+        .confidence {
+            font-size: 18px;
+            color: #666;
+        }
+        .loading {
+            display: none;
+            color: #667eea;
+            font-style: italic;
+        }
+        .examples {
+            margin-top: 30px;
+            text-align: left;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .examples h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .example-item {
+            margin: 5px 0;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .example-item:hover {
+            background: #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📰 News Headline Classifier</h1>
+        <p class="subtitle">AI-powered classification of news headlines into Politics, Sports, or Technology</p>
+
+        <input type="text" id="headline" placeholder="Enter a news headline..." autocomplete="off">
+        <br>
+        <button id="classifyBtn" onclick="classify()">Classify Headline</button>
+        <p id="loading" class="loading">Analyzing headline...</p>
+
+        <div id="result" class="result">
+            <h3>Classification Result:</h3>
+            <div class="category" id="category"></div>
+            <div class="confidence" id="confidence"></div>
+        </div>
+
+        <div class="examples">
+            <h3>Try these examples:</h3>
+            <div class="example-item" onclick="setExample('President Biden announces new climate policy')">President Biden announces new climate policy</div>
+            <div class="example-item" onclick="setExample('Manchester United wins Premier League title')">Manchester United wins Premier League title</div>
+            <div class="example-item" onclick="setExample('Apple releases new iPhone with advanced AI features')">Apple releases new iPhone with advanced AI features</div>
+            <div class="example-item" onclick="setExample('Congress passes infrastructure bill')">Congress passes infrastructure bill</div>
+            <div class="example-item" onclick="setExample('Serena Williams retires from tennis')">Serena Williams retires from tennis</div>
+        </div>
+    </div>
+
+    <script>
+        async function classify() {
+            const headline = document.getElementById('headline').value.trim();
+            if (!headline) {
+                alert('Please enter a headline to classify');
+                return;
+            }
+
+            const btn = document.getElementById('classifyBtn');
+            const loading = document.getElementById('loading');
+
+            btn.disabled = true;
+            loading.style.display = 'block';
+
+            try {
+                const response = await fetch('/.netlify/functions/classify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ headline: headline })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('category').textContent = result.category;
+                    document.getElementById('confidence').textContent =
+                        `Confidence: ${(result.confidence * 100).toFixed(1)}%`;
+                    document.getElementById('result').classList.add('show');
+                } else {
+                    alert('Error: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('Network error: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                loading.style.display = 'none';
+            }
+        }
+
+        function setExample(text) {
+            document.getElementById('headline').value = text;
+        }
+
+        // Allow Enter key to trigger classification
+        document.getElementById('headline').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                classify();
+            }
+        });
+    </script>
+</body>
+</html>
