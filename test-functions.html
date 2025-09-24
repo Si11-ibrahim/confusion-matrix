@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Netlify Function Test</title>
+</head>
+<body>
+    <h1>Test Netlify Functions</h1>
+    
+    <button onclick="testHealth()">Test Health Check</button>
+    <button onclick="testClassify()">Test Classify Function</button>
+    
+    <div id="results" style="margin-top: 20px; padding: 10px; border: 1px solid #ccc;"></div>
+
+    <script>
+    async function testHealth() {
+        const results = document.getElementById('results');
+        results.innerHTML = 'Testing health endpoint...';
+        
+        try {
+            const response = await fetch('/.netlify/functions/health');
+            const data = await response.json();
+            results.innerHTML = `<h3>Health Check Response:</h3><pre>${JSON.stringify(data, null, 2)}</pre>`;
+        } catch (error) {
+            results.innerHTML = `<h3>Health Check Error:</h3><pre>${error.message}</pre>`;
+        }
+    }
+
+    async function testClassify() {
+        const results = document.getElementById('results');
+        results.innerHTML = 'Testing classify endpoint...';
+        
+        try {
+            const response = await fetch('/.netlify/functions/classify', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ headline: 'Government announces new policy' })
+            });
+            
+            console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers);
+            
+            const data = await response.json();
+            results.innerHTML = `<h3>Classify Response:</h3><pre>${JSON.stringify(data, null, 2)}</pre>`;
+        } catch (error) {
+            results.innerHTML = `<h3>Classify Error:</h3><pre>${error.message}</pre>`;
+            console.error('Full error:', error);
+        }
+    }
+    </script>
+</body>
+</html>

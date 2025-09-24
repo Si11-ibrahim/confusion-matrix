@@ -12,25 +12,33 @@ def handler(event, context):
         'Access-Control-Allow-Methods': 'POST, OPTIONS'
     }
     
-    # Handle preflight OPTIONS request
-    if event['httpMethod'] == 'OPTIONS':
-        return {
-            'statusCode': 200,
-            'headers': headers,
-            'body': ''
-        }
-    
-    if event['httpMethod'] != 'POST':
-        return {
-            'statusCode': 405,
-            'headers': headers,
-            'body': json.dumps({'error': 'Method not allowed'})
-        }
-
     try:
+        # Handle preflight OPTIONS request
+        if event.get('httpMethod') == 'OPTIONS':
+            return {
+                'statusCode': 200,
+                'headers': headers,
+                'body': ''
+            }
+        
+        if event.get('httpMethod') != 'POST':
+            return {
+                'statusCode': 405,
+                'headers': headers,
+                'body': json.dumps({'error': f'Method {event.get("httpMethod", "UNKNOWN")} not allowed'})
+            }
+
         # Parse the request body
-        data = json.loads(event['body'])
-        headline = data.get('headline', '')
+        body = event.get('body', '{}')
+        if not body:
+            return {
+                'statusCode': 400,
+                'headers': headers,
+                'body': json.dumps({'error': 'Empty request body'})
+            }
+            
+        data = json.loads(body)
+        headline = data.get('headline', '').strip()
 
         if not headline:
             return {
@@ -39,8 +47,15 @@ def handler(event, context):
                 'body': json.dumps({'error': 'No headline provided'})
             }
 
-        # Load or train the model (in production, this should be cached or loaded from file)
-        model, vectorizer = load_model()
+        # Load or train the model
+        try:
+            model, vectorizer = load_model()
+        except Exception as model_error:
+            return {
+                'statusCode': 500,
+                'headers': headers,
+                'body': json.dumps({'error': f'Model loading failed: {str(model_error)}'})
+            }
 
         # Vectorize the input
         X_input = vectorizer.transform([headline])
@@ -55,15 +70,25 @@ def handler(event, context):
             'headers': headers,
             'body': json.dumps({
                 'category': prediction,
-                'confidence': confidence
+                'confidence': confidence,
+                'headline': headline  # Echo back for debugging
             })
         }
 
+    except json.JSONDecodeError as json_error:
+        return {
+            'statusCode': 400,
+            'headers': headers,
+            'body': json.dumps({'error': f'Invalid JSON: {str(json_error)}'})
+        }
     except Exception as e:
         return {
             'statusCode': 500,
             'headers': headers,
-            'body': json.dumps({'error': str(e)})
+            'body': json.dumps({
+                'error': f'Server error: {str(e)}',
+                'type': type(e).__name__
+            })
         }
 
 def load_model():
