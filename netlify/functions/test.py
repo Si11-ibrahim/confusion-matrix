@@ -1,6 +1,6 @@
 import json
 
-def handler(event, context):
+def main(event, context):
     headers = {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
@@ -25,3 +25,6 @@ def handler(event, context):
             'body': event.get('body', 'NO BODY')[:100]  # First 100 chars
         })
     }
+
+# Netlify needs this as the main entry point
+handler = main

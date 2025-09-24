@@ -1,6 +1,6 @@
 import json
 
-def handler(event, context):
+def main(event, context):
     headers = {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
@@ -24,3 +24,6 @@ def handler(event, context):
             'timestamp': str(context.aws_request_id) if hasattr(context, 'aws_request_id') else 'unknown'
         })
     }
+
+# Netlify needs this as the main entry point
+handler = main

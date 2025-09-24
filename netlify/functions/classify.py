@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 
-def handler(event, context):
+def main(event, context):
     # CORS headers for all responses
     headers = {
         'Content-Type': 'application/json',
@@ -166,3 +166,6 @@ def load_model():
     model.fit(X, y)
 
     return model, vectorizer
+
+# Netlify needs this as the main entry point
+handler = main
