@@ -4,10 +4,26 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 
 def handler(event, context):
+    # CORS headers for all responses
+    headers = {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+    }
+    
+    # Handle preflight OPTIONS request
+    if event['httpMethod'] == 'OPTIONS':
+        return {
+            'statusCode': 200,
+            'headers': headers,
+            'body': ''
+        }
+    
     if event['httpMethod'] != 'POST':
         return {
             'statusCode': 405,
-            'headers': {'Content-Type': 'application/json'},
+            'headers': headers,
             'body': json.dumps({'error': 'Method not allowed'})
         }
 
@@ -19,7 +35,7 @@ def handler(event, context):
         if not headline:
             return {
                 'statusCode': 400,
-                'headers': {'Content-Type': 'application/json'},
+                'headers': headers,
                 'body': json.dumps({'error': 'No headline provided'})
             }
 
@@ -36,7 +52,7 @@ def handler(event, context):
 
         return {
             'statusCode': 200,
-            'headers': {'Content-Type': 'application/json'},
+            'headers': headers,
             'body': json.dumps({
                 'category': prediction,
                 'confidence': confidence
@@ -46,7 +62,7 @@ def handler(event, context):
     except Exception as e:
         return {
             'statusCode': 500,
-            'headers': {'Content-Type': 'application/json'},
+            'headers': headers,
             'body': json.dumps({'error': str(e)})
         }
 
